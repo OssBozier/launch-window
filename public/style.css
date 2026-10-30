@@ -9,6 +9,7 @@
   --red: #d92d20;
   --red-soft: #fde8e7;
   --amber: #b54708;
+  --purple: #7a5af8;
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -22,6 +23,7 @@
     --red: #f04438;
     --red-soft: #3a1a18;
     --amber: #f79009;
+    --purple: #9b8afb;
   }
 }
 
@@ -79,6 +81,8 @@ button.on { background: var(--red); border-color: var(--red); color: #fff; }
 .meter { position: relative; height: 12px; border-radius: 6px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
 #meterFill { height: 100%; width: 0; background: var(--muted); transition: width 50ms linear; }
 #meterFill.voiced { background: var(--green); }
+#meterFill.echo { background: var(--purple); }
+#echoMark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--purple); }
 #meterMark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--amber); }
 
 .log { margin: 0; padding-left: 20px; max-height: 280px; overflow: auto; font-size: 14px; }

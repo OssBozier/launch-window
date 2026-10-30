@@ -14,6 +14,7 @@ const local = {
   mode: store.get('mode', 'mute'),
   thresholdDb: store.get('thresholdDb', -45),
   beep: store.get('beep', true),
+  echoGuard: store.get('echoGuard', true),
 };
 
 const state = {
@@ -29,7 +30,7 @@ const state = {
   clock: { offset: 0, rtt: Infinity, samples: [] },
 };
 
-let ctx, mic, gain, dest, vad;
+let ctx, mic, gain, dest, vad, playback;
 
 // ---------- clock sync (so onsets from different machines can be compared) ----------
 const epochNow = () => performance.timeOrigin + performance.now();
@@ -66,8 +67,12 @@ async function join() {
     gain = ctx.createGain();
     dest = ctx.createMediaStreamDestination();
     src.connect(gain).connect(dest);
-    vad = new AudioWorkletNode(ctx, 'vad');
-    src.connect(vad);
+    // Input 0 = mic, input 1 = everything we play out loud, so the detector can tell
+    // your voice from your speakers' echo.
+    vad = new AudioWorkletNode(ctx, 'vad', { numberOfInputs: 2 });
+    src.connect(vad, 0, 0);
+    playback = ctx.createGain();
+    playback.connect(vad, 0, 1);
     // Keep the worklet in the rendered graph without making it audible.
     const sink = ctx.createGain(); sink.gain.value = 0;
     vad.connect(sink).connect(ctx.destination);
@@ -143,7 +148,15 @@ function addPeer(id, name, initiator) {
 
   pc.addTrack(dest.stream.getAudioTracks()[0], dest.stream);
   pc.onicecandidate = e => { if (e.candidate) send({ type: 'signal', to: id, data: { candidate: e.candidate } }); };
-  pc.ontrack = e => { audio.srcObject = e.streams[0]; audio.play().catch(() => {}); };
+  pc.ontrack = e => {
+    // Playback stays on the <audio> element, because that's what the browser's own echo
+    // canceller listens to. The WebAudio copy only feeds the echo guard.
+    audio.srcObject = e.streams[0];
+    audio.play().catch(() => {});
+    peer.tap?.disconnect();
+    peer.tap = ctx.createMediaStreamSource(e.streams[0]);
+    peer.tap.connect(playback);
+  };
   pc.onconnectionstatechange = renderTiles;
   if (initiator) {
     pc.onnegotiationneeded = async () => {
@@ -176,18 +189,24 @@ function removePeer(id) {
   if (!p) return;
   p.pc.close();
   p.audio.remove();
+  p.tap?.disconnect();
   state.peers.delete(id);
   state.speaking.delete(id);
   state.heldPeers.delete(id);
 }
 
 // ---------- voice detection ----------
-function pushVadParams() { vad?.port.postMessage({ thresholdDb: local.thresholdDb }); }
+function pushVadParams() { vad?.port.postMessage({ thresholdDb: local.thresholdDb, echoGuard: local.echoGuard }); }
 
 function ctxToEpoch(t) { return epochNow() - (ctx.currentTime - t) * 1000; }
 
 function onVad(m) {
   if (m.type === 'level') return renderMeter(m);
+  if (m.type === 'echo') {
+    state.echoCount = (state.echoCount || 0) + 1;
+    $('echoCount').textContent = `Echo guard has ignored your speakers ${state.echoCount}× so far.`;
+    return;
+  }
   if (m.type === 'start') {
     if (state.selfMuted) return;
     state.iAmSpeaking = true;
@@ -201,11 +220,13 @@ function onVad(m) {
   $('vadState').className = 'pill' + (state.iAmSpeaking ? ' talk' : '');
 }
 
-function renderMeter({ db, voiced }) {
+function renderMeter({ db, voiced, echo, echoDb }) {
   const pct = v => Math.max(0, Math.min(100, ((v + 70) / 60) * 100));
   $('meterFill').style.width = pct(db) + '%';
-  $('meterFill').className = voiced && !state.selfMuted ? 'voiced' : '';
+  $('meterFill').className = state.selfMuted ? '' : voiced ? 'voiced' : echo ? 'echo' : '';
   $('meterMark').style.left = pct(local.thresholdDb) + '%';
+  $('echoMark').hidden = echoDb == null;
+  if (echoDb != null) $('echoMark').style.left = pct(echoDb) + '%';
 }
 
 // ---------- being held ----------
@@ -266,7 +287,9 @@ function beep() {
   g.gain.setValueAtTime(0.0001, t);
   g.gain.exponentialRampToValueAtTime(0.15, t + 0.01);
   g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
-  o.connect(g).connect(ctx.destination);
+  g.connect(ctx.destination);
+  g.connect(playback);   // so the tone from your speakers isn't mistaken for you
+  o.connect(g);
   o.start(t); o.stop(t + 0.16);
 }
 
@@ -320,6 +343,12 @@ function initLocalSettings() {
     pushVadParams();
   };
   $('l_beep').onchange = e => { local.beep = e.target.checked; store.set('beep', local.beep); };
+  $('l_echoGuard').checked = local.echoGuard;
+  $('l_echoGuard').onchange = e => {
+    local.echoGuard = e.target.checked;
+    store.set('echoGuard', local.echoGuard);
+    pushVadParams();
+  };
 }
 
 // ---------- rendering ----------

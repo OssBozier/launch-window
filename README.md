@@ -20,7 +20,7 @@ npm start
 Open <http://localhost:3000>, enter a name and a room, and join. To try it alone, open a second
 browser window (or click **Test: bot grabs floor**, then start talking straight away).
 
-**Use headphones.** With speakers, other people's voices leak into your mic and count as you talking.
+Headphones work best, but speakers are fine. See **Echo guard** below.
 
 ## Trying it with colleagues
 
@@ -56,10 +56,48 @@ stays on "connecting"/"failed", and you'd need to add a TURN server to `ICE` in 
      and is left alone.
    - If the winner stops within 400 ms (a cough, an "um"), everyone held is released.
    - Fairness: whoever lost the last collision wins the next one.
-4. **Being held** turns your outgoing audio to zero (or 20% in "duck" mode). The mic keeps
+4. **Echo guard** (see below) stops other people's voices coming out of your speakers from
+   counting as you talking.
+5. **Being held** turns your outgoing audio to zero (or 20% in "duck" mode). The mic keeps
    listening locally, so nothing is lost on your side. You see the red bar and, optionally, hear a short tone.
 
 All of the numbers above can be changed live in the **Room settings** panel.
+
+## Echo guard: using speakers instead of headphones
+
+With speakers, other people's voices come back into your mic. Without protection, every time
+someone else talked, your echo would look like you jumping in, and you'd get a red bar for
+saying nothing. There are three layers of defence:
+
+1. **The browser's echo canceller** (on by default) removes most of it, typically 20–40 dB.
+   For that to work, other people's audio has to play through a normal `<audio>` element,
+   which it does.
+2. **Shape check.** The detector gets a copy of everything the page plays. Echo rises and falls
+   syllable by syllable in step with that playback, 20–300 ms later. Your own voice doesn't.
+   If the mic's loudness changes match the playback's at some delay, it's treated as echo.
+3. **Level check.** From sound that passes the shape check, it learns how loudly your speakers
+   leak into your mic, and it re-learns if you change the volume. While someone else is
+   audible, the mic only counts as you if it's at least 6 dB louder than that expected echo.
+
+None of this applies in a silent gap, which is exactly where collisions happen. So the echo
+guard costs nothing in the case the app cares about. On the mic meter, purple means "ignored
+as echo", and the purple line is the current expected echo level. The guard can be turned off
+under **Just for you**.
+
+`public/vad-worklet.js` has been tested against simulated rooms: quiet speakers, loud laptop
+speakers with no echo cancelling, echo louder than the original, starting at the same instant
+as someone else's audio, and talking over someone. Known limits:
+
+- If the echo of someone else is *louder than your own voice* at your mic, you won't be
+  detected until they stop. Turn the speakers down or move the mic closer.
+- Starting to talk loudly *while someone else is talking* takes about half a second to register.
+  That doesn't matter much, since interruptions aren't held anyway.
+- **Two people in the same physical room on separate laptops** isn't covered. Your neighbour's
+  voice reaches your mic directly, before it arrives over the network, so there's no playback
+  to match it against. Raise the speech threshold, or have them share one laptop.
+
+A speakerphone with built-in echo cancelling (e.g. a USB conference puck) is the most robust
+no-headphones setup.
 
 ## Things to watch for while testing
 

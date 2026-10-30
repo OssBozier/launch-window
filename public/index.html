@@ -20,7 +20,7 @@
     <section id="joinView" class="card join">
       <h1>Floor prototype</h1>
       <p class="muted">A small voice call that holds back the second person when two people jump into the same pause.
-        Use headphones, or your speakers will set off your own mic.</p>
+        Headphones work best, but speakers are fine: the echo guard learns to ignore them.</p>
       <label>Your name <input id="nameInput" maxlength="30" autocomplete="name" placeholder="e.g. Sam"></label>
       <label>Room <input id="roomInput" maxlength="40" placeholder="team"></label>
       <button id="joinBtn" class="primary">Join with microphone</button>
@@ -49,8 +49,10 @@
               <span>Your mic</span>
               <span id="vadState" class="pill">quiet</span>
             </div>
-            <div class="meter"><div id="meterFill"></div><div id="meterMark" title="Speech threshold"></div></div>
-            <p class="muted small">The bar turns green when your voice counts as speech. If it triggers on background noise, raise the threshold below; if it misses you, lower it.</p>
+            <div class="meter"><div id="meterFill"></div><div id="meterMark" title="Speech threshold"></div><div id="echoMark" title="Expected echo from your speakers" hidden></div></div>
+            <p class="muted small">Green = your voice counts as speech. Purple = sound ignored as echo from your speakers (the purple line shows how loud the echo is expected to be right now).
+              If it triggers on background noise, raise the threshold below; if it misses you, lower it.</p>
+            <p class="muted small" id="echoCount"></p>
           </div>
 
           <div class="card">
@@ -77,6 +79,7 @@
           </label>
           <label>Speech threshold <span><input type="range" id="l_threshold" min="-70" max="-20" step="1"> <b id="l_thresholdVal"></b> dB</span></label>
           <label class="check"><input type="checkbox" id="l_beep"> Play a short tone in my ears when I'm held</label>
+          <label class="check"><input type="checkbox" id="l_echoGuard"> Echo guard: ignore other people's voices coming out of my speakers</label>
         </aside>
       </div>
     </section>

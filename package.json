@@ -1,0 +1,13 @@
+{
+  "name": "floor-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Prototype voice call that holds back the second person when two people jump into the same gap",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

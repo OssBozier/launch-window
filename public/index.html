@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Floor Prototype</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="heldBar" class="held-bar" hidden>
+    <div class="held-fill" id="heldFill"></div>
+    <div class="held-text">
+      <strong id="heldTitle">Hold on — someone else got there first</strong>
+      <span>Your mic is paused for <b id="heldCount">3.0</b> s. Press <kbd>Space</kbd> to talk anyway.</span>
+    </div>
+    <button id="overrideBtn" class="override">Talk anyway</button>
+  </div>
+
+  <main>
+    <section id="joinView" class="card join">
+      <h1>Floor prototype</h1>
+      <p class="muted">A small voice call that holds back the second person when two people jump into the same pause.
+        Use headphones, or your speakers will set off your own mic.</p>
+      <label>Your name <input id="nameInput" maxlength="30" autocomplete="name" placeholder="e.g. Sam"></label>
+      <label>Room <input id="roomInput" maxlength="40" placeholder="team"></label>
+      <button id="joinBtn" class="primary">Join with microphone</button>
+      <p id="joinError" class="error" hidden></p>
+    </section>
+
+    <section id="callView" hidden>
+      <header class="topbar">
+        <div>
+          <h1 id="roomTitle">Room</h1>
+          <p class="muted small" id="status">Connecting…</p>
+        </div>
+        <div class="actions">
+          <button id="muteBtn">Mute</button>
+          <button id="copyBtn">Copy invite link</button>
+          <button id="botBtn" title="A pretend participant grabs the floor for 2.5 s. Start talking straight away to see what being held feels like.">Test: bot grabs floor</button>
+        </div>
+      </header>
+
+      <div class="grid">
+        <div>
+          <div id="tiles" class="tiles"></div>
+
+          <div class="card meter-card">
+            <div class="meter-head">
+              <span>Your mic</span>
+              <span id="vadState" class="pill">quiet</span>
+            </div>
+            <div class="meter"><div id="meterFill"></div><div id="meterMark" title="Speech threshold"></div></div>
+            <p class="muted small">The bar turns green when your voice counts as speech. If it triggers on background noise, raise the threshold below; if it misses you, lower it.</p>
+          </div>
+
+          <div class="card">
+            <h2>What happened</h2>
+            <ol id="log" class="log"></ol>
+          </div>
+        </div>
+
+        <aside class="card settings">
+          <h2>Room settings <span class="muted small">(shared with everyone)</span></h2>
+          <label>Hold the second speaker for <span><input type="number" id="s_holdMs" min="500" max="10000" step="250"> ms</span></label>
+          <label>Count as a collision if they start within <span><input type="number" id="s_windowMs" min="100" max="5000" step="100"> ms</span></label>
+          <label>Wait for near-simultaneous starts <span><input type="number" id="s_arbitrateMs" min="0" max="500" step="10"> ms</span></label>
+          <label>Treat speech shorter than this as a false start <span><input type="number" id="s_falseStartMs" min="0" max="2000" step="50"> ms</span></label>
+          <label class="check"><input type="checkbox" id="s_fairness"> Whoever lost last time wins the next collision</label>
+          <button id="saveSettings">Apply to room</button>
+
+          <h2>Just for you</h2>
+          <label>When held
+            <select id="l_mode">
+              <option value="mute">Mute my mic</option>
+              <option value="duck">Turn my mic down to 20%</option>
+            </select>
+          </label>
+          <label>Speech threshold <span><input type="range" id="l_threshold" min="-70" max="-20" step="1"> <b id="l_thresholdVal"></b> dB</span></label>
+          <label class="check"><input type="checkbox" id="l_beep"> Play a short tone in my ears when I'm held</label>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div id="audios" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>

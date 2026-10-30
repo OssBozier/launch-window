@@ -149,6 +149,50 @@ as someone else's audio, and talking over someone. Known limits:
 A speakerphone with built-in echo cancelling (e.g. a USB conference puck) is the most robust
 no-headphones setup.
 
+## Test the idea yourself
+
+### 1. Get it running (no install needed)
+
+On the GitHub repo page: **Code → Codespaces → Create codespace on main**. It installs
+everything, starts the server, and opens Launch Window in a new tab, already on `https://`, so
+the mic works. To let others join: open the **Ports** tab, right-click port 3000 →
+**Port visibility → Public**, and share that address. (Codespaces is free for a generous
+number of hours a month; stop the codespace when you're done.)
+
+Or run it on your own machine (see *Run it* and *Trying it with colleagues* above).
+
+### 2. Feel it on your own (5 minutes)
+
+Join, check your mic bar goes green when you talk, then click **Test: bot launches** and start
+talking straight away. That's exactly what being put on hold feels like. Try Space, and try
+"Turn my mic down to 20%" instead of mute.
+
+### 3. Measure it with 2–4 people (about 30 minutes)
+
+Ideally everyone is in a different place, as on a remote recording. Pick a format that creates
+lots of pauses to jump into, such as an open discussion where anyone can answer, or each person
+bringing three questions to throw to the group.
+
+| Round | Setting | At the start | Write down at the end |
+|---|---|---|---|
+| **A: baseline**, 10 min | Tick **Measure only** → Apply | **Reset counts** | *overtalks* |
+| **B: Launch Window**, 10 min | Untick **Measure only** → Apply | **Reset counts** | *collisions*, *launched anyway* |
+
+In round A everyone hears every overtalk. In round B, the only overtalk anyone actually hears is
+when someone pressed Space ("launched anyway"). So:
+
+> **Overtalk reduction ≈ 1 − (launched anyway in B ÷ overtalks in A)**, for rounds of equal length.
+
+90% or more is the goal. Next time, run the rounds the other way round, because people
+naturally get more polite as a conversation goes on.
+
+Then ask everyone, 1–5: *How natural did round B feel? Did the red bar annoy you? Did you feel
+cut off unfairly?* A big reduction that everyone hates isn't a win.
+
+The counts only include collisions the tool detected. If you can, record the call (for
+example each person records their own mic, or one person screen-records with audio) and
+listen back to catch any it missed.
+
 ## Things to watch for while testing
 
 - Does the person on hold notice the red bar, or do they keep talking? Is the tone better?

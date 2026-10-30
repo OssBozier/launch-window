@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS = {
   arbitrateMs: 80,     // wait this long after the first start to collect near-simultaneous starts
   falseStartMs: 400,   // if the winner stops talking within this, it was a cough/false start: release holds
   fairness: true,      // whoever lost the last collision wins the next one
+  measureOnly: false,  // count collisions but don't hold anyone: a baseline to compare against
 };
 
 const server = http.createServer((req, res) => {
@@ -48,6 +49,7 @@ function getRoom(name) {
       pending: null,             // { cands: [{ peer, onset }], timer }
       lastLoser: null,
       botTimer: null,
+      stats: newStats(),
     });
   }
   return rooms.get(name);
@@ -63,18 +65,31 @@ function setFloor(room, floor) {
   broadcast(room, { type: 'floor', id: floor?.id ?? null });
 }
 
+function newStats() { return { collisions: 0, held: 0, overrides: 0, falseStarts: 0, since: Date.now() }; }
+
+function bump(room, key) {
+  room.stats[key]++;
+  broadcast(room, { type: 'stats', stats: room.stats });
+}
+
 function hold(room, peer, byId, marginMs) {
   const ms = room.settings.holdMs;
+  const by = nameOf(room, byId);
+  const how = marginMs >= 0
+    ? `started ${Math.round(marginMs)} ms after ${by}`
+    : `started ${Math.round(-marginMs)} ms before ${by}, but the floor went to ${by}`;
+  room.lastLoser = peer.id;
+  bump(room, 'collisions');
+  if (room.settings.measureOnly) {
+    log(room, `${peer.name} ${how} — overtalk (measure only, not held)`);
+    return;
+  }
+  bump(room, 'held');
   clearHold(room, peer.id, false);
   const timer = setTimeout(() => clearHold(room, peer.id, false), ms);
   room.held.set(peer.id, { until: Date.now() + ms, timer });
   send(peer.ws, { type: 'held', ms, by: byId, byName: nameOf(room, byId), marginMs });
   broadcast(room, { type: 'peer_held', id: peer.id, ms });
-  room.lastLoser = peer.id;
-  const by = nameOf(room, byId);
-  const how = marginMs >= 0
-    ? `started ${Math.round(marginMs)} ms after ${by}`
-    : `started ${Math.round(-marginMs)} ms before ${by}, but the floor went to ${by}`;
   log(room, `${peer.name} ${how} — on hold for ${(ms / 1000).toFixed(1)} s`);
 }
 
@@ -136,6 +151,7 @@ function onSpeechEnd(room, peer, lastVoiced) {
   const talked = Math.min(lastVoiced, Date.now()) - (onset ?? room.floor.onset);
   setFloor(room, null);
   if (talked < room.settings.falseStartMs && room.held.size) {
+    bump(room, 'falseStarts');
     log(room, `${peer.name} only spoke for ${Math.max(0, Math.round(talked))} ms (false start) — releasing holds`);
     for (const id of [...room.held.keys()]) clearHold(room, id, true);
   }
@@ -168,7 +184,7 @@ wss.on('connection', ws => {
       room = getRoom(String(msg.room || 'lobby').slice(0, 40));
       me = { id: String(nextId++), name: String(msg.name || 'Guest').slice(0, 30), ws };
       send(ws, {
-        type: 'welcome', id: me.id, settings: room.settings, floor: room.floor?.id ?? null,
+        type: 'welcome', id: me.id, settings: room.settings, floor: room.floor?.id ?? null, stats: room.stats,
         peers: [...room.peers.values()].map(p => ({ id: p.id, name: p.name })),
       });
       room.peers.set(me.id, me);
@@ -188,6 +204,7 @@ wss.on('connection', ws => {
       case 'override':
         if (room.held.has(me.id)) {
           clearHold(room, me.id, false);
+          bump(room, 'overrides');
           log(room, `${me.name} pressed Space to launch anyway`);
           handOver(room);
         }
@@ -202,6 +219,11 @@ wss.on('connection', ws => {
         log(room, `${me.name} changed the room settings`);
         break;
       }
+      case 'reset_stats':
+        room.stats = newStats();
+        broadcast(room, { type: 'stats', stats: room.stats });
+        log(room, `${me.name} reset the counts`);
+        break;
       case 'test_bot': {
         if (room.floor) break;
         clearTimeout(room.botTimer);

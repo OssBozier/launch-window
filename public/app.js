@@ -102,6 +102,7 @@ function connect() {
     send({ type: 'join', room: state.room, name: state.myName });
     for (let i = 0; i < 5; i++) setTimeout(ping, i * 300);
     setInterval(ping, 5000);
+    setInterval(() => renderStats(state.lastStats), 30000);
   };
   ws.onclose = () => { $('status').textContent = 'Disconnected — reload the page to rejoin.'; };
   ws.onmessage = e => onMessage(JSON.parse(e.data));
@@ -116,6 +117,7 @@ function onMessage(m) {
       state.myId = m.id;
       state.floorId = m.floor;
       applySettings(m.settings);
+      renderStats(m.stats);
       for (const p of m.peers) addPeer(p.id, p.name, true);
       break;
     case 'peer_joined':
@@ -129,6 +131,7 @@ function onMessage(m) {
     case 'held': startHold(m); break;
     case 'released': endHold(false); break;
     case 'settings': applySettings(m.settings); break;
+    case 'stats': renderStats(m.stats); break;
     case 'event': addLog(m.at, m.text); break;
   }
   renderTiles();
@@ -311,10 +314,12 @@ $('copyBtn').onclick = async () => {
   setTimeout(() => ($('copyBtn').textContent = 'Copy invite link'), 1500);
 };
 $('botBtn').onclick = () => send({ type: 'test_bot' });
+$('resetStats').onclick = () => send({ type: 'reset_stats' });
 
-const SETTING_KEYS = ['holdMs', 'windowMs', 'arbitrateMs', 'falseStartMs', 'fairness'];
+const SETTING_KEYS = ['holdMs', 'windowMs', 'arbitrateMs', 'falseStartMs', 'fairness', 'measureOnly'];
 function applySettings(s) {
   state.settings = s;
+  renderStats(state.lastStats);
   for (const k of SETTING_KEYS) {
     const el = $('s_' + k);
     if (el.type === 'checkbox') el.checked = s[k]; else el.value = s[k];
@@ -384,9 +389,29 @@ function renderTiles() {
   renderStatus();
 }
 
+function renderStats(s) {
+  if (!s) return;
+  const mins = Math.max(1, Math.round((Date.now() - s.since) / 60000));
+  const measuring = state.settings.measureOnly;
+  const el = $('stats');
+  el.replaceChildren();
+  const item = (n, label) => {
+    const span = document.createElement('span');
+    const b = document.createElement('b');
+    b.textContent = n;
+    span.append(b, label);
+    el.append(span);
+  };
+  item(s.collisions, measuring ? 'overtalks' : 'collisions');
+  if (!measuring) { item(s.held, 'put on hold'); item(s.overrides, 'launched anyway'); }
+  item(s.falseStarts, 'false starts');
+  el.append(`· over ${mins} min${mins === 1 ? '' : 's'}${measuring ? ' (measure only)' : ''}`);
+  state.lastStats = s;
+}
+
 function addLog(at, text) {
   const li = document.createElement('li');
-  if (/on hold for/.test(text)) li.className = 'hit';
+  if (/on hold for|overtalk/.test(text)) li.className = 'hit';
   const t = document.createElement('time');
   t.textContent = new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   li.append(t, text);

@@ -56,7 +56,11 @@
           </div>
 
           <div class="card">
-            <h2>What happened</h2>
+            <div class="stats-head">
+              <h2>What happened</h2>
+              <button id="resetStats" class="small-btn">Reset counts</button>
+            </div>
+            <p id="stats" class="stats"></p>
             <ol id="log" class="log"></ol>
           </div>
         </div>
@@ -68,6 +72,7 @@
           <label>Wait for near-simultaneous starts <span><input type="number" id="s_arbitrateMs" min="0" max="500" step="10"> ms</span></label>
           <label>Treat speech shorter than this as a false start <span><input type="number" id="s_falseStartMs" min="0" max="2000" step="50"> ms</span></label>
           <label class="check"><input type="checkbox" id="s_fairness"> Whoever lost last time wins the next collision</label>
+          <label class="check"><input type="checkbox" id="s_measureOnly"> Measure only: count overtalk but don't put anyone on hold</label>
           <button id="saveSettings">Apply to room</button>
 
           <h2>Just for you</h2>

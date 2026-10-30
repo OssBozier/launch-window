@@ -76,6 +76,17 @@ async function main() {
   }
   {
     const [a, b] = await room('Alice', 'Bob');
+    a.send({ type: 'settings', settings: { measureOnly: true } });
+    await wait(30);
+    const t = Date.now();
+    a.send({ type: 'speech_start', onset: t - 60 }); b.send({ type: 'speech_start', onset: t - 30 });
+    await wait(150);
+    const stats = got(a, 'stats').at(-1)?.stats;
+    check('Measure only: overtalk is counted but nobody is put on hold',
+      got(b, 'held').length === 0 && stats?.collisions === 1 && stats?.held === 0, JSON.stringify(stats));
+  }
+  {
+    const [a, b] = await room('Alice', 'Bob');
     a.send({ type: 'speech_start', onset: Date.now() });
     await wait(1500);
     b.send({ type: 'speech_start', onset: Date.now() });

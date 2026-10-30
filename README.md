@@ -9,6 +9,20 @@ press **Space** to launch anyway.
 
 It runs in the browser: no installs for participants, just a link.
 
+## Why this exists
+
+The recent Moonshots episode where the whole team was together in the studio was a much calmer,
+easier listen. In the same room, people read each other's cues, so the overtalk sorted itself
+out. Remotely, those cues arrive a fraction of a second late, and two people jump into the
+same pause far more often.
+
+The Moonshots team is busy and usually in different locations when recording, so getting
+everyone into a studio isn't always realistic. Launch Window is an attempt to see whether that
+studio calm can be recreated remotely, by managing who gets each gap in the conversation.
+
+It doesn't need to be perfect. Cutting overtalk by 90% or more would already make a real
+difference to how the show sounds.
+
 ## For the Moonshot podcast: quick start
 
 1. **Before the episode:** one person runs it (see *Run it* and *Trying it with colleagues*

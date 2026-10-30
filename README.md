@@ -12,7 +12,6 @@ anything that plugs into Zoom or Teams.
 You need [Node.js](https://nodejs.org) 18 or newer.
 
 ```bash
-cd floor-prototype
 npm install
 npm start
 ```
@@ -21,6 +20,15 @@ Open <http://localhost:3000>, enter a name and a room, and join. To try it alone
 browser window (or click **Test: bot grabs floor**, then start talking straight away).
 
 Headphones work best, but speakers are fine. See **Echo guard** below.
+
+## Tests
+
+```bash
+npm test
+```
+
+This runs the server's floor decisions against fake clients, and the speech/echo detector
+against simulated rooms (`test/`).
 
 ## Trying it with colleagues
 

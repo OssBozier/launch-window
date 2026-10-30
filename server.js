@@ -1,4 +1,4 @@
-// Floor-control prototype server.
+// Launch Window server.
 // - Serves the web client from ./public
 // - Relays WebRTC signalling so browsers can connect to each other directly (mesh audio)
 // - Decides who "has the floor" when people start talking, and holds back whoever
@@ -75,7 +75,7 @@ function hold(room, peer, byId, marginMs) {
   const how = marginMs >= 0
     ? `started ${Math.round(marginMs)} ms after ${by}`
     : `started ${Math.round(-marginMs)} ms before ${by}, but the floor went to ${by}`;
-  log(room, `${peer.name} ${how} — held for ${(ms / 1000).toFixed(1)} s`);
+  log(room, `${peer.name} ${how} — on hold for ${(ms / 1000).toFixed(1)} s`);
 }
 
 function clearHold(room, id, notify) {
@@ -188,7 +188,7 @@ wss.on('connection', ws => {
       case 'override':
         if (room.held.has(me.id)) {
           clearHold(room, me.id, false);
-          log(room, `${me.name} pressed Space to talk anyway`);
+          log(room, `${me.name} pressed Space to launch anyway`);
           handOver(room);
         }
         break;
@@ -207,7 +207,7 @@ wss.on('connection', ws => {
         clearTimeout(room.botTimer);
         setFloor(room, { id: 'bot', onset: Date.now(), takenAt: Date.now() });
         broadcast(room, { type: 'speaking', id: 'bot', on: true });
-        log(room, `Test bot took the floor — start talking now to see what being held feels like`);
+        log(room, `Test bot launched — start talking now to see what being on hold feels like`);
         room.botTimer = setTimeout(() => {
           broadcast(room, { type: 'speaking', id: 'bot', on: false });
           if (room.floor?.id === 'bot') { setFloor(room, null); handOver(room); }
@@ -230,4 +230,4 @@ wss.on('connection', ws => {
   });
 });
 
-server.listen(PORT, () => console.log(`Floor prototype running at http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`Launch Window running at http://localhost:${PORT}`));

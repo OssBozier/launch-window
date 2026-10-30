@@ -1,8 +1,8 @@
 {
-  "name": "floor-prototype",
+  "name": "launch-window",
   "version": "0.1.0",
   "private": true,
-  "description": "Prototype voice call that holds back the second person when two people jump into the same gap",
+  "description": "Launch Window: a voice call where only one person gets through each pause, and anyone who jumps in a moment later is put on hold",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

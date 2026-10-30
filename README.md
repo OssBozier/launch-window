@@ -1,11 +1,39 @@
-# Floor prototype
+# 🚀 Launch Window
 
-A small browser voice call for testing one idea: **when two people jump into the same pause,
-the first one gets the floor and the second one is held back for a few seconds**, with a red
-bar telling them so. Pressing **Space** (or "Talk anyway") opens their mic straight away.
+**Every pause is a launch window, and only one person gets through it.**
 
-It's a test rig for finding out whether this *feels* good in real conversation before building
-anything that plugs into Zoom or Teams.
+When two people jump into the same gap in a conversation, Launch Window lets the first one
+through and puts the second on hold for a few seconds. They get a red bar saying who launched
+first and a T-minus countdown until their mic reopens. If they really do need to cut in, they
+press **Space** to launch anyway.
+
+It runs in the browser: no installs for participants, just a link.
+
+## For the Moonshot podcast: quick start
+
+1. **Before the episode:** one person runs it (see *Run it* and *Trying it with colleagues*
+   below) and sends round the invite link.
+2. **Everyone joins** with the link, types their name, and allows the microphone.
+3. **Do a 30-second warm-up.** Each person talks and checks their mic bar turns **green**. If it
+   flickers green on background noise, nudge the *Speech threshold* slider right. Then click
+   **Test: bot launches** and start talking straight away, so everyone knows what the red bar
+   looks like before it happens for real.
+4. **Headphones are best.** Speakers are OK too: the echo guard learns to ignore them (the mic
+   bar shows purple when it does). Two hosts sitting in the same room on separate laptops is the
+   one setup it can't handle, so share a laptop or use headphones.
+5. **Recording.** Launch Window is the conversation, not the recorder. Keep recording the way
+   you do now: each host recording their own mic locally (a "double-ender") works especially
+   well. Your local recording still has everything you said while on hold, so the editor
+   decides what stays.
+
+Worth tweaking after the first episode, in **Room settings** (changes apply to everyone):
+- *Put the second speaker on hold for*: 3 s by default. Fast back-and-forth may prefer 1.5–2 s.
+- *Count as a collision if they start within*: 1.2 s by default. Lower it if people get put on
+  hold when they meant to cut in.
+- *Just for you → Turn my mic down to 20% while on hold*: gentler than a hard mute.
+
+The **What happened** panel lists every collision and how close it was, which makes a fun stat
+for the show.
 
 ## Run it
 
@@ -17,7 +45,7 @@ npm start
 ```
 
 Open <http://localhost:3000>, enter a name and a room, and join. To try it alone, open a second
-browser window (or click **Test: bot grabs floor**, then start talking straight away).
+browser window (or click **Test: bot launches**, then start talking straight away).
 
 Headphones work best, but speakers are fine. See **Echo guard** below.
 
@@ -58,15 +86,15 @@ stays on "connecting"/"failed", and you'd need to add a TURN server to `ICE` in 
    times from different computers can be compared fairly, not just by whose message arrived first.
 3. **The server decides** (`server.js`):
    - If nobody has the floor, it waits 80 ms to collect anyone else starting at the same moment,
-     then gives the floor to the earliest start. Everyone else is held.
-   - If someone took the floor less than 1.2 s ago, a new speaker is treated as a collision and held.
+     then gives the floor to the earliest start. Everyone else is put on hold.
+   - If someone launched less than 1.2 s ago, a new speaker is treated as a collision and put on hold.
    - If someone has been talking longer than that, a new speaker is an ordinary interruption
      and is left alone.
-   - If the winner stops within 400 ms (a cough, an "um"), everyone held is released.
+   - If the winner stops within 400 ms (a cough, an "um"), everyone on hold is released.
    - Fairness: whoever lost the last collision wins the next one.
 4. **Echo guard** (see below) stops other people's voices coming out of your speakers from
    counting as you talking.
-5. **Being held** turns your outgoing audio to zero (or 20% in "duck" mode). The mic keeps
+5. **Being put on hold** turns your outgoing audio to zero (or 20% in "duck" mode). The mic keeps
    listening locally, so nothing is lost on your side. You see the red bar and, optionally, hear a short tone.
 
 All of the numbers above can be changed live in the **Room settings** panel.
@@ -74,7 +102,7 @@ All of the numbers above can be changed live in the **Room settings** panel.
 ## Echo guard: using speakers instead of headphones
 
 With speakers, other people's voices come back into your mic. Without protection, every time
-someone else talked, your echo would look like you jumping in, and you'd get a red bar for
+someone else talked, your echo would look like you jumping in, and you'd be put on hold for
 saying nothing. There are three layers of defence:
 
 1. **The browser's echo canceller** (on by default) removes most of it, typically 20–40 dB.
@@ -109,7 +137,7 @@ no-headphones setup.
 
 ## Things to watch for while testing
 
-- Does the held person notice the red bar, or do they keep talking? Is the tone better?
+- Does the person on hold notice the red bar, or do they keep talking? Is the tone better?
 - Is 3 seconds too long or too short? Does "duck" feel better than "mute"?
 - How often does it fire on false alarms (laughs, "mm-hm", keyboard)? Try the threshold slider.
 - How often do people reach for Space? If it's a lot, the collision window is probably too wide.

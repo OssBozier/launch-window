@@ -1,4 +1,4 @@
-// Floor-control prototype client.
+// Launch Window client.
 // Audio path:  mic -> [VAD worklet]            (detects speech on the raw mic)
 //              mic -> gain -> WebRTC to peers  (gain is what gets muted/ducked when held)
 
@@ -243,9 +243,8 @@ function startHold({ ms, byName, marginMs }) {
   state.holdTotal = ms;
   applyGain();
   if (local.beep) beep();
-  $('heldTitle').textContent = byName === 'Test bot'
-    ? 'Hold on — the test bot got there first'
-    : `Hold on — ${byName} got there first` + (marginMs > 0 ? ` (by ${Math.round(marginMs)} ms)` : '');
+  $('heldTitle').textContent = `Hold — ${byName === 'Test bot' ? 'the test bot' : byName} launched first` +
+    (marginMs > 0 ? ` (by ${Math.round(marginMs)} ms)` : '');
   $('heldBar').hidden = false;
   document.body.classList.add('is-held');
   state.holdTimer = setTimeout(() => endHold(false), ms);
@@ -374,8 +373,8 @@ function renderTiles() {
     const badges = document.createElement('div');
     badges.className = 'badges';
     const pill = (text, cls) => { const s = document.createElement('span'); s.className = 'pill ' + cls; s.textContent = text; badges.append(s); };
-    if (state.floorId === p.id) pill('has the floor', 'floor');
-    if (held) pill('held', 'held');
+    if (state.floorId === p.id) pill('on air', 'floor');
+    if (held) pill('on hold', 'held');
     if (speaking && !held) pill('talking', 'talk');
     if (p.self && state.selfMuted) pill('muted', '');
     if (p.conn && p.conn !== 'connected') pill(p.conn, '');
@@ -387,7 +386,7 @@ function renderTiles() {
 
 function addLog(at, text) {
   const li = document.createElement('li');
-  if (/held for/.test(text)) li.className = 'hit';
+  if (/on hold for/.test(text)) li.className = 'hit';
   const t = document.createElement('time');
   t.textContent = new Date(at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   li.append(t, text);

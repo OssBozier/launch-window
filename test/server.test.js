@@ -50,24 +50,25 @@ async function main() {
 
     b.send({ type: 'override' });
     await wait(30);
-    check('Space override is logged', got(a, 'event').some(e => /talk anyway/.test(e.text)));
+    check('Space override is logged', got(a, 'event').some(e => /launch anyway/.test(e.text)));
   }
   {
     const [a, c] = await room('Alice', 'Cara');
     let t = Date.now();
-    a.send({ type: 'speech_start', onset: t }); c.send({ type: 'speech_start', onset: t + 20 });
+    // Start times are in the past: the server caps future ones at "now", which would make a tie.
+    a.send({ type: 'speech_start', onset: t - 40 }); c.send({ type: 'speech_start', onset: t - 20 });
     await wait(150);
     a.send({ type: 'speech_end', lastVoiced: Date.now() }); c.send({ type: 'speech_end', lastVoiced: Date.now() });
     await wait(3100);
     t = Date.now();
-    a.send({ type: 'speech_start', onset: t - 20 }); c.send({ type: 'speech_start', onset: t });
+    a.send({ type: 'speech_start', onset: t - 40 }); c.send({ type: 'speech_start', onset: t - 20 });
     await wait(150);
     check('Fairness: last collision\'s loser wins the next', got(a, 'floor').at(-1)?.id === c.id);
   }
   {
     const [a, b] = await room('Alice', 'Bob');
     const t = Date.now();
-    a.send({ type: 'speech_start', onset: t }); b.send({ type: 'speech_start', onset: t + 50 });
+    a.send({ type: 'speech_start', onset: t - 60 }); b.send({ type: 'speech_start', onset: t - 10 });
     await wait(150);
     a.send({ type: 'speech_end', lastVoiced: t + 150 });
     await wait(30);
